@@ -467,7 +467,7 @@ public class GMScript : MonoBehaviour
             }
             
         }*/
-        ÅAÅADebug.Log(maxOpen.Count);
+        //Debug.Log(maxOpen.Count);
         return maxOpen;
     }
 
