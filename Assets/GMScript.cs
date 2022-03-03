@@ -353,9 +353,235 @@ public class GMScript : MonoBehaviour
         return 100 * (int) (BOUNDS_MAX - combined.Average(p => p.y)); // HIGHEST SCORE = LOWEST AVERAGE 
     }
 
+    private List<int> GetChunkTopOpen()//get the max opening of bot line of enemy chunk
+    {   HashSet<int> opens = new HashSet<int>();
+        int count0 = 0;
+        List<int> maxOpen = new List<int>();
+        int maxOpenLen = 1;
+        int maxRow = 0;
+        if(_enemyChunk == null)
+        {
+            for(int x = _minEx; x <= _maxEx; x++)
+            {
+                maxOpen.Add(x);
+            }
+            //Debug.Log(maxOpen.Count());
+            return maxOpen;
+        }
+        for (int row = -BOUNDS_MAX; row <= BOUNDS_MAX; row++) // just MIN_BOUND to MAX_BOUND?
+        {
+            //var maxCount = max_width;//_maxBx - _minBx + 1; // width
+            
+            foreach (var p in _enemyChunk)
+            {
+                if (p.y == row && p.y >= maxRow)
+                {
+                    maxRow = p.y;
+                }
+            }
+
+        }
+        for(int i = 0; i < _enemyChunk.Length -1; i++)
+        {
+            int opening = 0;
+            int openPos = 0;
+            if (_enemyChunk[i].y == maxRow)
+            {
+                if(_enemyChunk[i+1].y == maxRow)
+                {
+                    opening = Math.Abs(_enemyChunk[i + 1].x - _enemyChunk[i].x -1);
+                    if(opening > maxOpenLen)
+                    {
+                        maxOpenLen = opening;
+                        openPos = Math.Min(_enemyChunk[i + 1].x, _enemyChunk[i].x) + 1;
+                        for(int j = 0; j<opening - 1; j++)
+                        {
+                            maxOpen.Add(openPos);
+                            openPos++;
+                        }
+                            
+                    }
+                    if (Math.Max(_enemyChunk[i].x - _minEx, _maxEx - _enemyChunk[i+1].x) > opening)
+                    {
+                        opening = _enemyChunk[i].x - _minEx;
+                        openPos = _minEx;
+                        if (_maxEx - _enemyChunk[i].x > opening)
+                        {
+                            openPos = _enemyChunk[i].x + 1;
+                        }
+                        for (int j = 0; j < opening - 1; j++)
+                        {
+                            maxOpen.Add(openPos);
+                            openPos++;
+                        }
+                    }
+
+                }
+                if (Math.Max(_enemyChunk[i].x - _minEx, _maxEx - _enemyChunk[i].x) > opening)
+                {
+                    opening = _enemyChunk[i].x - _minEx;
+                    openPos = _minEx;
+                    if (_maxEx - _enemyChunk[i].x > opening)
+                    {
+                        openPos = _enemyChunk[i].x + 1;
+                    }
+                    for (int j = 0; j < opening - 1; j++)
+                    {
+                        maxOpen.Add(openPos);
+                        openPos++;
+                    }
+                }
+
+            }
+        }
+        /*for (int i = 0; i < _enemyChunk[0].Length; i++)//add all empty opens into a HashSet
+        {
+            if (_enemyChunk[0][i] == null)
+            {
+                opens.Add(i);
+                count0++;
+            }
+        }
+        int[] open = opens.ToArray();
+        List<int> maxOpen = new List<int>();
+        int maxOpenLen = 0;
+        for(int i = 0; i < count0; i++)//find the max open of the top lane
+        {   
+            if (opens.Contains(open[i]))
+            {
+                int j = open[i];
+                int newOpenLen = 1;
+                List<int> newOpen = new List<int>();
+                while (opens.Contains(j))
+                {
+                    
+                    j++;
+                    newOpenLen++;
+                    newOpen.Add(j);
+                }
+                if(newOpenLen > maxOpenLen)
+                {
+                    maxOpenLen = newOpenLen;
+                    maxOpen = newOpen;
+                }
+            }
+            
+        }*/
+        ÅAÅADebug.Log(maxOpen.Count);
+        return maxOpen;
+    }
+
+    private int getShapeLoc(Vector3Int[] piece, List<int> max)
+    {
+        int xTopPos = 0;
+        int xBotPos = 0;
+        int yLeftPos = 0;
+        int yRightPos = 0;
+        int xTopCount = 0;
+        int xBotCount = 0;
+        int yLeftCount = 0;
+        int yRightCount = 0;
+        for (int i = 0;i < piece.Length; i++)
+        {
+            xTopPos = Math.Max(xTopPos, piece[i].y);
+            xBotPos = Math.Min(xBotPos, piece[i].y);
+            yRightPos = Math.Max(yRightPos, piece[i].x);
+            yLeftPos = Math.Min(yLeftPos, piece[i].x);
+        }
+        for (int i = 0; i < piece.Length; i++)
+        {
+            if(piece[i].y == xTopPos)
+            {
+                xTopCount++;
+            }
+            if(piece[i].y == xBotPos)
+            {
+                xBotCount++;
+            }
+            if(piece[i].x == yLeftPos)
+            {
+                yLeftCount++;
+            }
+            if(piece[i].x == yRightPos)
+            {
+                yRightCount++;
+            }
+        }
+        int[] maxArray = max.ToArray();
+        int x = yRightPos - yLeftPos;
+        int y = xTopPos - xBotPos;
+        int[] posArray = new int[] {xBotCount, xTopCount, yLeftCount, yRightCount};
+        int maxScore = 0;
+        int maxSide = 0;
+        
+        for(int i = 0; i<posArray.Length; i++)
+        {   
+            int score = 0;
+            if(maxArray.Length > 0)
+            {   
+                score += (posArray[i]);
+                if(i == 0 || i == 1)
+                {
+                    score -= y;
+                }
+                if (i == 2 || i == 3)
+                {
+                    score -= x;
+                }
+                //score -= 1/2()
+                //if (piece[i].x)
+                if (score > maxScore)
+                {
+                    maxSide = i;
+                    maxScore = score;
+                }
+            }
+        }
+        //Debug.Log(maxSide);
+        return maxSide;
+    }
+
     private Vector3Int[] EnemyChooseAction(Vector3Int[] piece)
     {
-        if (null == piece) return null; 
+        if (null == piece) return null;
+        var enemyGoLeft = ShiftPiece(piece, -1, 0, false);
+        var enemyGoRight = ShiftPiece(piece, 1, 0, false);
+        var enemyGoRotate = RotatePiece(piece, false);
+        List<int> max = GetChunkTopOpen();
+        int[] maxArray = max.ToArray();
+        int side = getShapeLoc(piece, max);
+        //List<>
+        int index = 0;
+        int maxX = _maxEx;
+        for(int i = 0; i < piece.Length; i++)
+        {
+            if(piece[i].x < maxX)
+            {
+                maxX = piece[i].x;
+                index = i;
+            }
+        }
+        //bug.Log(maxArray.Length);
+        //bug.Log(index);
+        if (maxArray.Length > 0 && piece[index].x > maxArray[0])
+        {
+            return enemyGoLeft;
+        }
+        if (maxArray.Length > 0 && piece[index].x < maxArray[0])
+        {
+            return enemyGoRight;
+        }
+
+        if (side == 1 || side == 2 || side ==3 )
+        {
+            return enemyGoRotate;
+        }
+        
+
+
+        return piece;
+        
+        /*if (null == piece) return null; 
         var enemyGoLeft = ShiftPiece(piece, -1, 0, false);
         var enemyGoRight = ShiftPiece(piece, 1, 0, false);
         var enemyGoRotate = RotatePiece(piece, false);
@@ -365,7 +591,7 @@ public class GMScript : MonoBehaviour
         var maxScore = validOptions.Max(p => EvaluateEnemyPieceScore(p, _enemyChunk));
         validOptions = validOptions.Where(p => EvaluateEnemyPieceScore(p, _enemyChunk) == maxScore).ToArray();
         if (DEBUG_MODE) Debug.Log($"max score = {maxScore}; options = {validOptions.Length}");
-        return validOptions.ElementAt(Random.Range(0, validOptions.Count())); 
+        return validOptions.ElementAt(Random.Range(0, validOptions.Count())); */
     }
     
     private void EnemyDoAction()
